@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/course.dart';
+import '../providers/course_provider.dart';
 import 'course_score_form.dart';
 
-class CourseScreen extends StatefulWidget {
+class CourseScreen extends StatelessWidget {
   const CourseScreen({super.key, required this.course});
 
   final Course course;
 
-  @override
-  State<CourseScreen> createState() => _CourseScreenState();
-}
-
-class _CourseScreenState extends State<CourseScreen> {
-  List<CourseScore> get scores => widget.course.scores;
-
-  void _addScore() async {
-    CourseScore? newSCore = await Navigator.of(context).push<CourseScore>(
+  void _addScore(BuildContext context) async {
+    CourseScore? newScore = await Navigator.of(context).push<CourseScore>(
       MaterialPageRoute(builder: (ctx) => const CourseScoreForm()),
     );
 
-    if (newSCore != null) {
-      setState(() {
-        scores.add(newSCore);
-      });
+    if (newScore != null) {
+      Provider.of<CoursesProvider>(context, listen: false)
+          .addScore(course, newScore);
     }
   }
 
@@ -32,38 +26,47 @@ class _CourseScreenState extends State<CourseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = const Center(child: Text('No Scores added yet.'));
-
-    if (scores.isNotEmpty) {
-      content = ListView.builder(
-        itemCount: scores.length,
-        itemBuilder:
-            (ctx, index) => ListTile(
-              title: Text(scores[index].studentName),
-              trailing: Text(
-                scores[index].studenScore.toString(),
-                style: TextStyle(
-                  color: scoreColor(scores[index].studenScore),
-                  fontSize: 15,
-                ),
-              ),
-            ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: mainColor,
+        backgroundColor: Colors.blue,
         title: Text(
-          widget.course.name,
+          course.name,
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          IconButton(onPressed: _addScore, icon: const Icon(Icons.add)),
+          IconButton(
+            onPressed: () => _addScore(context),
+            icon: const Icon(Icons.add),
+          ),
         ],
       ),
-      body: content,
+      body: Consumer<CoursesProvider>(
+        builder: (ctx, courseProvider, _) {
+          final updatedCourse = courseProvider.getCourseFor(course);
+
+          if (updatedCourse.scores.isEmpty) {
+            return const Center(child: Text('No Scores added yet.'));
+          }
+
+          return ListView.builder(
+            itemCount: updatedCourse.scores.length,
+            itemBuilder: (ctx, index) {
+              final score = updatedCourse.scores[index];
+              return ListTile(
+                title: Text(score.studentName),
+                trailing: Text(
+                  score.studenScore.toString(),
+                  style: TextStyle(
+                    color: scoreColor(score.studenScore),
+                    fontSize: 15,
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'providers/course_provider.dart';
+import 'repositories/courses_mock_repository.dart';
 import 'screens/course_list_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => CoursesProvider(
+        repository: MockCoursesRepository(),
+      ),
+      child: const MyApp(),
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
